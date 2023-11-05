@@ -32,7 +32,7 @@ class Home(models.Model):
     internet_plan = models.CharField(max_length=255, blank=True, null=True)
     internet_speed = models.CharField(max_length=255, blank=True, null=True)
     # You might also include a field for the contract or renewal date, if relevant
-    internet_contract_renewal_date = models.DateField(blank=True, null=True)
+    contract_end_date = models.DateField(blank=True, null=True)
     # ... other fields from external services ...
 
     def __str__(self):
