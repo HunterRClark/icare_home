@@ -14,9 +14,21 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+# icare_project/urls.py
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include, re_path
+from django.contrib.auth import views as auth_views
+from django.views.generic.base import RedirectView
 
 urlpatterns = [
+    # Redirect the base URL to the login page
+    path('', RedirectView.as_view(pattern_name='login', permanent=False), name='index'),
     path('admin/', admin.site.urls),
+    path('core/', include('core.urls', namespace='core')),
+    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='/login/'), name='logout'),
+    path('homeowner/', include('homeowner.urls', namespace='homeowner')),
+    # Add more URL patterns here
 ]
+
+
