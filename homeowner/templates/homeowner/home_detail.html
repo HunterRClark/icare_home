@@ -1,0 +1,76 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}Home Details{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Home Details: {{ home.address }}</h2>
+    <div class="card">
+        <div class="card-body">
+            <!-- Home Address -->
+            <p class="card-text"><strong>Address:</strong> {{ home.address }}</p>
+            
+            <!-- Lawn Size -->
+            {% if home.lawn_size %}
+            <p class="card-text"><strong>Lawn Size:</strong> {{ home.lawn_size }} sqft</p>
+            {% endif %}
+            
+            <!-- Number of Trees -->
+            {% if home.number_of_trees %}
+            <p class="card-text"><strong>Number of Trees:</strong> {{ home.number_of_trees }}</p>
+            {% endif %}
+            
+            <!-- Internet Details -->
+            {% if home.internet_service_provider %}
+            <p class="card-text"><strong>Internet Service Provider:</strong> {{ home.internet_service_provider }}</p>
+            {% endif %}
+            
+            {% if home.internet_plan %}
+            <p class="card-text"><strong>Internet Plan:</strong> {{ home.internet_plan }}</p>
+            {% endif %}
+            
+            {% if home.internet_speed %}
+            <p class="card-text"><strong>Internet Speed:</strong> {{ home.internet_speed }}</p>
+            {% endif %}
+            
+            {% if home.internet_contract_end_date %}
+            <p class="card-text"><strong>Internet Contract End Date:</strong> {{ home.internet_contract_end_date }}</p>
+            {% endif %}
+            
+            <!-- Mortgage Details -->
+            {% if home.mortgage_lender %}
+            <p class="card-text"><strong>Mortgage Lender:</strong> {{ home.mortgage_lender }}</p>
+            {% endif %}
+            
+            {% if home.mortgage_amount %}
+            <p class="card-text"><strong>Mortgage Amount:</strong> {{ home.mortgage_amount }}</p>
+            {% endif %}
+            
+            {% if home.mortgage_monthly_payment %}
+            <p class="card-text"><strong>Mortgage Monthly Payment:</strong> {{ home.mortgage_monthly_payment }}</p>
+            {% endif %}
+            
+            <!-- Insurance Details -->
+            {% if home.insurance_provider %}
+            <p class="card-text"><strong>Insurance Provider:</strong> {{ home.insurance_provider }}</p>
+            {% endif %}
+            
+            {% if home.insurance_policy_number %}
+            <p class="card-text"><strong>Insurance Policy Number:</strong> {{ home.insurance_policy_number }}</p>
+            {% endif %}
+            
+            {% if home.insurance_coverage_amount %}
+            <p class="card-text"><strong>Insurance Coverage Amount:</strong> {{ home.insurance_coverage_amount }}</p>
+            {% endif %}
+            
+            <!-- Action buttons -->
+            <div class="mt-4">
+                <a href="{% url 'homeowner:home_edit' home.pk %}" class="btn btn-outline-primary">Edit</a>
+                <a href="{% url 'homeowner:home_delete' home.pk %}" class="btn btn-outline-danger">Delete</a>
+                <a href="{% url 'homeowner:home_list' %}" class="btn btn-secondary">Back to Your Homes</a>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

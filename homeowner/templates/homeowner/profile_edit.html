@@ -1,0 +1,21 @@
+{% extends 'base_generic.html' %}
+{% load widget_tweaks %}  <!-- Load widget_tweaks to use its features -->
+
+{% block content %}
+<div class="container mt-4">
+    <h1>Edit Profile</h1>
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+        <div class="form-group">
+            <label>{{ field.label }}</label>
+            {% render_field field class="form-control" %}
+            {% if field.help_text %}
+            <small class="form-text text-muted">{{ field.help_text }}</small>
+            {% endif %}
+        </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Update Profile</button>
+    </form>
+</div>
+{% endblock %}

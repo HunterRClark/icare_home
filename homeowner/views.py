@@ -13,51 +13,80 @@ class RegisterView(generic.CreateView):
     success_url = reverse_lazy('login')
     template_name = 'homeowner/register.html'
 
-# New ProfileView class to view and edit user profile
+# ProfileDetailView class to view user profile
 @method_decorator(login_required, name='dispatch')
-class ProfileView(generic.UpdateView):
+class ProfileDetailView(generic.DetailView):
     model = Profile
-    form_class = ProfileForm
     template_name = 'homeowner/profile.html'
-    success_url = reverse_lazy('dashboard')  # Replace 'dashboard' with the actual name once implemented
+    context_object_name = 'profile'
 
     def get_object(self):
-        return Profile.objects.get_or_create(user=self.request.user)[0]
+        # Ensure we return the Profile instance for the logged in user
+        return self.request.user.profile
 
-# New HomeListView class to list homes
+# ProfileUpdateView class to edit user profile
+@method_decorator(login_required, name='dispatch')
+class ProfileUpdateView(generic.UpdateView):
+    model = Profile
+    form_class = ProfileForm
+    template_name = 'homeowner/profile_edit.html'
+    success_url = reverse_lazy('homeowner:profile_detail')
+
+    def get_object(self):
+        return self.request.user.profile
+
+    def form_valid(self, form):
+        user = form.instance.user
+        user.email = form.cleaned_data.get('email', user.email)
+        user.first_name = form.cleaned_data.get('first_name', user.first_name)
+        user.last_name = form.cleaned_data.get('last_name', user.last_name)
+        user.save()
+        return super().form_valid(form)
+
+# HomeListView class to list homes
 @method_decorator(login_required, name='dispatch')
 class HomeListView(generic.ListView):
     model = Home
     template_name = 'homeowner/home_list.html'
+    context_object_name = 'homes'
 
     def get_queryset(self):
-        return Home.objects.filter(owner=self.request.user)
+        return self.request.user.homes.all()
 
-# New HomeCreateView class to add a new home
+# HomeCreateView class to add a new home
 @method_decorator(login_required, name='dispatch')
 class HomeCreateView(generic.CreateView):
     model = Home
     form_class = HomeForm
     template_name = 'homeowner/home_form.html'
-    success_url = reverse_lazy('dashboard')  # Replace 'dashboard' with the actual name once implemented
+    success_url = reverse_lazy('homeowner:home_list')
 
     def form_valid(self, form):
         form.instance.owner = self.request.user
         return super().form_valid(form)
 
-# New HomeUpdateView class to edit an existing home
+# HomeUpdateView class to edit an existing home
 @method_decorator(login_required, name='dispatch')
 class HomeUpdateView(generic.UpdateView):
     model = Home
     form_class = HomeForm
     template_name = 'homeowner/home_form.html'
-    success_url = reverse_lazy('dashboard')  # Replace 'dashboard' with the actual name once implemented
+    success_url = reverse_lazy('homeowner:home_list')
 
-# New HomeDeleteView class to delete an existing home
+# HomeDeleteView class to delete an existing home
 @method_decorator(login_required, name='dispatch')
 class HomeDeleteView(generic.DeleteView):
     model = Home
     template_name = 'homeowner/home_confirm_delete.html'
-    success_url = reverse_lazy('dashboard')  # Replace 'dashboard' with the actual name once implemented
+    success_url = reverse_lazy('homeowner:home_list')
 
+# HomeDetailView class to view details of a home
+@method_decorator(login_required, name='dispatch')
+class HomeDetailView(generic.DetailView):
+    model = Home
+    template_name = 'homeowner/home_detail.html'
+    context_object_name = 'home'
 
+    def get_queryset(self):
+        # This method ensures that a user can only access their own home's details.
+        return self.request.user.homes.all()

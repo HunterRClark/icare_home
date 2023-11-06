@@ -1,15 +1,27 @@
 # homeowner/urls.py
 from django.urls import path
-from .views import views
+from .views import (
+    RegisterView,
+    ProfileDetailView,
+    ProfileUpdateView,
+    HomeListView,
+    HomeCreateView,
+    HomeUpdateView,
+    HomeDeleteView,
+    HomeDetailView,
+)
 
 app_name = 'homeowner'
 
 urlpatterns = [
-    path('register/', views.RegisterView.as_view(), name='register'),
-    path('profile/edit/', views.ProfileView.as_view(), name='edit_profile'),
-    path('homes/', views.HomeListView.as_view(), name='home_list'),
-    path('homes/add/', views.HomeCreateView.as_view(), name='home_add'),
-    path('homes/<int:pk>/edit/', views.HomeUpdateView.as_view(), name='home_edit'),
-    path('homes/<int:pk>/delete/', views.HomeDeleteView.as_view(), name='home_delete'),
+    path('register/', RegisterView.as_view(), name='register'),
+    path('profile/<int:pk>/', ProfileDetailView.as_view(), name='profile_detail'),  # For viewing the profile
+    path('profile/edit/', ProfileUpdateView.as_view(), name='edit_profile'),  # For editing the profile
+    path('homes/', HomeListView.as_view(), name='home_list'),  # List of homes
+    path('homes/add/', HomeCreateView.as_view(), name='home_add'),  # Add a new home
+    path('homes/<int:pk>/', HomeDetailView.as_view(), name='home_detail'),  # Details of a specific home
+    path('homes/<int:pk>/edit/', HomeUpdateView.as_view(), name='home_edit'),  # Edit an existing home
+    path('homes/<int:pk>/delete/', HomeDeleteView.as_view(), name='home_delete'),  # Delete an existing home
     # Add other URL patterns for homeowner app here
 ]
+

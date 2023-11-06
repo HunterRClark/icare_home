@@ -23,16 +23,36 @@ class Home(models.Model):
         related_name='homes'
     )
     address = models.CharField(_("Home Address"), max_length=255)
-    mortgage_details = models.TextField(_("Mortgage Details"), blank=True, null=True)
-    insurance_details = models.TextField(_("Insurance Details"), blank=True, null=True)
-    lawn_size = models.DecimalField(_("Lawn Size"), max_digits=7, decimal_places=2, blank=True, null=True)
+    # Mortgage Details
+    mortgage_lender = models.CharField(max_length=255, blank=True, null=True)
+    mortgage_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    mortgage_monthly_payment = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    mortgage_interest_rate = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    mortgage_start_date = models.DateField(blank=True, null=True)
+    mortgage_end_date = models.DateField(blank=True, null=True)
+    # Insurance Details
+    insurance_provider = models.CharField(max_length=255, blank=True, null=True)
+    insurance_policy_number = models.CharField(max_length=255, blank=True, null=True)
+    insurance_coverage_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    insurance_premium = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    insurance_start_date = models.DateField(blank=True, null=True)
+    insurance_end_date = models.DateField(blank=True, null=True)
+    # Interior Details
+    floor_plan = models.ImageField(upload_to='floor_plans/', blank=True, null=True)
+    number_of_bedrooms = models.PositiveIntegerField(_("Number of Bedrooms"), default=0)
+    number_of_bathrooms = models.PositiveIntegerField(_("Number of Bathrooms"), default=0)
+    number_of_living_rooms = models.PositiveIntegerField(_("Number of Living Rooms"), default=0)
+    total_floor_space = models.DecimalField(_("Total Floor Space (sqft)"), max_digits=10, decimal_places=2, blank=True, null=True)
+    #Exterior Details
+    lawn_size = models.DecimalField(_("Area of Lawn (sqft)"), max_digits=7, decimal_places=2, blank=True, null=True)
     flower_bed_size = models.DecimalField(_("Flower Bed Size"), max_digits=7, decimal_places=2, blank=True, null=True)
     number_of_trees = models.IntegerField(_("Number of Trees"), default=0)
+    #internet details
     internet_service_provider = models.CharField(max_length=255, blank=True, null=True)
     internet_plan = models.CharField(max_length=255, blank=True, null=True)
     internet_speed = models.CharField(max_length=255, blank=True, null=True)
     # You might also include a field for the contract or renewal date, if relevant
-    contract_end_date = models.DateField(blank=True, null=True)
+    internet_contract_end_date = models.DateField(blank=True, null=True)
     # ... other fields from external services ...
 
     def __str__(self):

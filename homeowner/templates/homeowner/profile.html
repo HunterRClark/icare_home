@@ -1,0 +1,40 @@
+{% extends 'base_generic.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h1>Profile Details</h1>
+    <div class="card">
+        <div class="card-body">
+            <!-- Display user information here -->
+            <div class="mb-3">
+                <h5 class="card-title"><strong>Username:</strong></h5>
+                <p class="card-text">{{ user.username }}</p>
+            </div>
+            <div class="mb-3">
+                <h5 class="card-title"><strong>Email:</strong></h5>
+                <p class="card-text">{{ user.email }}</p>
+            </div>
+            <div class="mb-3">
+                <h5 class="card-title"><strong>First Name:</strong></h5>
+                <p class="card-text">{{ user.first_name }}</p>
+            </div>
+            <div class="mb-3">
+                <h5 class="card-title"><strong>Last Name:</strong></h5>
+                <p class="card-text">{{ user.last_name }}</p>
+            </div>
+
+            <!-- Display Profile model specific information here -->
+            <div class="mb-3">
+                <h5 class="card-title"><strong>Phone Number:</strong></h5>
+                <p class="card-text">{{ profile.phone_number }}</p>
+            </div>
+            <!-- Add other profile model fields here -->
+
+            <!-- Button to navigate to edit profile page -->
+            <a href="{% url 'homeowner:edit_profile' %}" class="btn btn-primary">Edit Profile</a>
+
+            <!-- Button to navigate to home list -->
+            <a href="{% url 'homeowner:home_list' %}" class="btn btn-info">View Homes</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+<!-- homeowner/templates/homeowner/home_confirm_delete.html -->
+{% extends 'base_generic.html' %}
+
+{% block content %}
+<h2>Are you sure you want to delete "{{ object.address }}"?</h2>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-primary">Confirm Delete</button>
+</form>
+<a href="{% url 'homeowner:home_list' %}">Cancel</a>
+{% endblock %}
