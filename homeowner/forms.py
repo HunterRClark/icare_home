@@ -80,6 +80,7 @@ class HomeForm(forms.ModelForm):
             'insurance_coverage_amount', 'insurance_premium', 'insurance_start_date', 
             'insurance_end_date'
         ]
+
         widgets = {
             'address': forms.TextInput(attrs={'class': 'form-control'}),
             'floor_plan': forms.FileInput(attrs={'class': 'form-control-file'}),

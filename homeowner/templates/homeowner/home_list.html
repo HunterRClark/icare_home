@@ -8,9 +8,9 @@
         <h1 class="h3">Your Homes</h1>
         <a href="{% url 'homeowner:home_add' %}" class="btn btn-primary">Add New Home</a>
     </div>
-    {% if home_list %}
+    {% if homes %}
     <div class="row">
-        {% for home in home_list %}
+        {% for home in homes %}
         <div class="col-md-4 mb-3">
             <div class="card h-100">
                 <div class="card-body">

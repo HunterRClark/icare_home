@@ -15,7 +15,7 @@ app_name = 'homeowner'
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
-    path('profile/<int:pk>/', ProfileDetailView.as_view(), name='profile_detail'),  # For viewing the profile
+    path('profile/', ProfileDetailView.as_view(), name='profile_detail'),  # For viewing the profile
     path('profile/edit/', ProfileUpdateView.as_view(), name='edit_profile'),  # For editing the profile
     path('homes/', HomeListView.as_view(), name='home_list'),  # List of homes
     path('homes/add/', HomeCreateView.as_view(), name='home_add'),  # Add a new home

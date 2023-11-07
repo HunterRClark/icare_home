@@ -39,9 +39,9 @@ class Home(models.Model):
     insurance_end_date = models.DateField(blank=True, null=True)
     # Interior Details
     floor_plan = models.ImageField(upload_to='floor_plans/', blank=True, null=True)
-    number_of_bedrooms = models.PositiveIntegerField(_("Number of Bedrooms"), default=0)
-    number_of_bathrooms = models.PositiveIntegerField(_("Number of Bathrooms"), default=0)
-    number_of_living_rooms = models.PositiveIntegerField(_("Number of Living Rooms"), default=0)
+    number_of_bedrooms = models.PositiveIntegerField(_("Number of Bedrooms"), default=0, blank=True, null=True)
+    number_of_bathrooms = models.PositiveIntegerField(_("Number of Bathrooms"), default=0, blank=True, null=True)
+    number_of_living_rooms = models.PositiveIntegerField(_("Number of Living Rooms"), default=0, blank=True, null=True)
     total_floor_space = models.DecimalField(_("Total Floor Space (sqft)"), max_digits=10, decimal_places=2, blank=True, null=True)
     #Exterior Details
     lawn_size = models.DecimalField(_("Area of Lawn (sqft)"), max_digits=7, decimal_places=2, blank=True, null=True)
