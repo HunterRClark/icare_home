@@ -2,7 +2,7 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.views import generic
-from .forms import UserRegisterForm, ProfileForm, HomeForm
+from .forms import UserRegisterForm, ProfileForm, HomeForm, InternetDealsForm
 from .models import Profile, Home
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -115,3 +115,33 @@ class HomeDetailView(generic.DetailView):
     def get_queryset(self):
         # This method ensures that a user can only access their own home's details.
         return self.request.user.homes.all()
+# Dashboard class        
+@method_decorator(login_required, name='dispatch')
+class DashboardView(generic.TemplateView):
+    template_name = 'homeowner/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        user_home = Home.objects.filter(owner=user).first()
+        context['profile'] = Profile.objects.get(user=user)
+        context['homes'] = Home.objects.filter(owner=user)
+
+        # Initialize the form
+        context['internet_deals_form'] = InternetDealsForm(instance=user_home, user=user)  # Adjust as needed
+
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = InternetDealsForm(request.POST)
+        if form.is_valid():
+            # Save the form and associate it with the user's home
+            internet_deal = form.save(commit=False)
+            internet_deal.owner = request.user  # Assuming the Home model has an 'owner' field
+            internet_deal.save()
+
+            # Redirect to the dashboard to show a fresh form
+            return redirect('homeowner:dashboard')  # Ensure this is the correct named URL for your dashboard
+        else:
+            # If the form is not valid, re-render the dashboard with the form errors
+            return self.render_to_response(self.get_context_data(internet_deals_form=form))

@@ -32,12 +32,20 @@ class UserRegisterForm(UserCreationForm):
 class ProfileForm(forms.ModelForm):
     class Meta:
         model = Profile
-        fields = ['phone_number', 'first_name', 'last_name', 'email']  # Add other fields as required
+        fields = [
+            'phone_number', 'first_name', 'last_name', 'email','number_of_phones',
+            'phone_plan_provider','phone_plan_cost','phone_plan_data_limit','phone_plan_contract_end_date',
+        ]  # Add other fields as required
         widgets = {
             'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Number'}),
             'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'First Name'}),
             'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Last Name'}),
             'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Email'}),
+            'number_of_phones': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Number of Phones'}),
+            'phone_plan_provider': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Name of Phone Providor'}),
+            'phone_plan_cost': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Current Phone Plan Cost'}),
+            'phone_plan_data_limit': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Current Phone Data Plan'}),
+            'phone_plan_contract_end_date': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Phone Plan Contract End Date'}),
             # Add widgets for other fields
         }
 
@@ -73,12 +81,12 @@ class HomeForm(forms.ModelForm):
         fields = [
             'address', 'floor_plan', 'number_of_bedrooms', 'number_of_bathrooms', 
             'number_of_living_rooms', 'total_floor_space', 'lawn_size', 'flower_bed_size',
-            'number_of_trees', 'internet_service_provider', 'internet_plan', 'internet_speed', 
+            'number_of_trees', 'internet_service_provider', 'internet_monthly_payment', 'current_internet_speed', 
             'internet_contract_end_date', 'mortgage_lender', 'mortgage_amount', 
             'mortgage_monthly_payment', 'mortgage_interest_rate', 'mortgage_start_date', 
             'mortgage_end_date', 'insurance_provider', 'insurance_policy_number', 
             'insurance_coverage_amount', 'insurance_premium', 'insurance_start_date', 
-            'insurance_end_date'
+            'insurance_end_date','recommended_internet_speed'
         ]
 
         widgets = {
@@ -92,8 +100,9 @@ class HomeForm(forms.ModelForm):
             'flower_bed_size': forms.NumberInput(attrs={'class': 'form-control'}),
             'number_of_trees': forms.NumberInput(attrs={'class': 'form-control'}),
             'internet_service_provider': forms.TextInput(attrs={'class': 'form-control'}),
-            'internet_plan': forms.TextInput(attrs={'class': 'form-control'}),
-            'internet_speed': forms.TextInput(attrs={'class': 'form-control'}),
+            'internet_monthly_payment': forms.TextInput(attrs={'class': 'form-control'}),
+            'current_internet_speed': forms.TextInput(attrs={'class': 'form-control'}),
+            'reccomended_internet_speed': forms.TextInput(attrs={'class': 'form-control'}),
             'internet_contract_end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'mortgage_lender': forms.TextInput(attrs={'class': 'form-control'}),
             'mortgage_amount': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -108,3 +117,35 @@ class HomeForm(forms.ModelForm):
             'insurance_start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'insurance_end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         }
+
+class InternetDealsForm(forms.ModelForm):
+    home_address = forms.ModelChoiceField(
+        queryset=Home.objects.none(),
+        empty_label="Select a Home",
+        to_field_name="address",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
+    class Meta:
+        model = Home
+        fields = ['home_address', 'current_internet_speed', 'recommended_internet_speed', 'internet_monthly_payment']
+        labels = {
+            'current_internet_speed': 'Current Internet Speed (Mbps)',
+            'recommended_internet_speed': 'Recommended Internet Speed (Mbps)',
+            'internet_monthly_payment': 'Monthly Payment ($)'
+        }
+        widgets = {
+            'current_internet_speed': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Current Internet Speed (Mbps)'}),
+            'recommended_internet_speed': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Recommended Internet Speed (Mbps)'}),
+            'internet_monthly_payment': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Monthly Payment ($)'}),
+        }
+        help_texts = {
+            'recommended_internet_speed': ('Not sure what speed you need? '
+                                           '<a href="https://www.highspeedinternet.com/how-much-internet-speed-do-i-need" target="_blank">Find out here</a>.')
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(InternetDealsForm, self).__init__(*args, **kwargs)
+        if user:
+            self.fields['home_address'].queryset = Home.objects.filter(owner=user)

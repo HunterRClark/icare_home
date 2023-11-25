@@ -11,6 +11,11 @@ class Profile(models.Model):
         related_name='profile'
     )
     phone_number = models.CharField(max_length=15, blank=True, null=True)
+    number_of_phones = models.PositiveIntegerField(default=0, blank=True, null=True, verbose_name=_("Number of Phones"))
+    phone_plan_provider = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Phone Plan Provider"))
+    phone_plan_cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, verbose_name=_("Monthly Cost"))
+    phone_plan_data_limit = models.CharField(max_length=255, blank=True, null=True, verbose_name=_("Data Limit"))
+    phone_plan_contract_end_date = models.DateField(blank=True, null=True, verbose_name=_("Contract End Date"))
     # Additional fields can be added here if needed for the homeowner's personal details
 
     def __str__(self):
@@ -49,8 +54,9 @@ class Home(models.Model):
     number_of_trees = models.IntegerField(_("Number of Trees"), default=0)
     #internet details
     internet_service_provider = models.CharField(max_length=255, blank=True, null=True)
-    internet_plan = models.CharField(max_length=255, blank=True, null=True)
-    internet_speed = models.CharField(max_length=255, blank=True, null=True)
+    internet_monthly_payment = models.CharField(max_length=255, blank=True, null=True)
+    current_internet_speed = models.CharField(max_length=255, blank=True, null=True)
+    recommended_internet_speed = models.CharField(max_length=255, blank=True, null=True)
     # You might also include a field for the contract or renewal date, if relevant
     internet_contract_end_date = models.DateField(blank=True, null=True)
     # ... other fields from external services ...

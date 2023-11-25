@@ -1,0 +1,149 @@
+{% extends 'base_generic.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Dashboard Heading -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>Homeowner Dashboard</h2>
+        </div>
+    </div>
+
+    <!-- Profile Information -->
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">Profile Information</div>
+                <div class="card-body">
+                    <p><strong>User:</strong> {{ profile.user.username }}</p>
+                    <p><strong>Phone Number:</strong> {{ profile.phone_number }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Homes Details - Collapsible Sections -->
+{% for home in homes %}
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <!-- Home Address as a clickable link -->
+            <a href="{% url 'homeowner:home_detail' home.id %}">
+                {{ home.address }}
+            </a>
+            <!-- Toggle arrow for collapsible content -->
+            <a href="#homeDetails{{ home.id }}" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="homeDetails{{ home.id }}">
+                <i class="fas fa-chevron-down"></i>
+            </a>
+        </div>
+        <div id="homeDetails{{ home.id }}" class="collapse">
+            <div class="card-body">
+                <h5>Mortgage Details</h5>
+                <p>Lender: {{ home.mortgage_lender }}</p>
+                <p>Amount: {{ home.mortgage_amount }}</p>
+                <p>Monthly Payment: {{ home.mortgage_monthly_payment }}</p>
+                <!-- Add more mortgage details as needed -->
+                
+                <h5>Insurance Details</h5>
+                <p>Provider: {{ home.insurance_provider }}</p>
+                <p>Policy Number: {{ home.insurance_policy_number }}</p>
+                <!-- Add more insurance details as needed -->
+                
+                <h5>Internet Plan Details</h5>
+                <p>Provider: {{ home.internet_service_provider }}</p>
+                <p>Speed: {{ home.current_internet_speed }}</p>
+                <!-- Add more internet plan details as needed -->
+            </div>
+        </div>
+    </div>
+{% endfor %}
+<!-- Notifications and Find Deals Section -->
+<div class="row">
+    <div class="col-md-6">
+        <!-- Notifications Section -->
+        <div class="card">
+            <div class="card-header">Notifications</div>
+            <div class="card-body">
+                <p>No new notifications.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <!-- Find Deals Section -->
+        <div class="card">
+            <div class="card-header">
+                <h4>Find Deals</h4>
+            </div>
+            <div class="card-body">
+                <p>Select the type of deal you're interested in:</p>
+                <div class="list-group mb-3">
+                    <button type="button" class="list-group-item list-group-item-action" onclick="showDealForm('internet')">Internet</button>
+                    <button type="button" class="list-group-item list-group-item-action" onclick="showDealForm('landscaping')">Landscaping</button>
+                    <button type="button" class="list-group-item list-group-item-action" onclick="showDealForm('phonePlan')">Phone Plan</button>
+                    <!-- More deal types as needed -->
+                </div>
+                <div id="dealFormContainer">
+                    <!-- Internet Deals Form (Initially Hidden) -->
+                    <div id="internetDealsForm" style="display: none;">
+                        <form method="post">
+                            {% csrf_token %}
+                            {{ internet_deals_form.home_address }}
+                            {{ internet_deals_form.current_internet_speed }}
+                            {{ internet_deals_form.recommended_internet_speed }}
+                            {{ internet_deals_form.internet_monthly_payment }}
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    </div>
+                    <!-- Placeholder for Landscaping Deals Form -->
+                    <div id="landscapingDealsForm" style="display: none;">
+                        <p>Landscaping deals form will be loaded here...</p>
+                    </div>
+                    <!-- Placeholder for Phone Plan Deals Form -->
+                    <div id="phonePlanDealsForm" style="display: none;">
+                        <p>Phone plan deals form will be loaded here...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- JavaScript for Dynamic Deal Form Loading -->
+<script>
+    function showDealForm(dealType) {
+        // Hide all forms initially
+        document.getElementById('internetDealsForm').style.display = 'none';
+        document.getElementById('landscapingDealsForm').style.display = 'none';
+        document.getElementById('phonePlanDealsForm').style.display = 'none';
+
+        // Show the selected form
+        if (dealType === 'internet') {
+            document.getElementById('internetDealsForm').style.display = 'block';
+        } else if (dealType === 'landscaping') {
+            document.getElementById('landscapingDealsForm').style.display = 'block';
+        } else if (dealType === 'phonePlan') {
+            document.getElementById('phonePlanDealsForm').style.display = 'block';
+        }
+        // Add similar logic for other deal types
+    }
+</script>
+
+<!-- Font Awesome for Chevron Icon -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet">
+
+<!-- JavaScript for Chevron Icon Toggle -->
+<script>
+    $(document).ready(function() {
+        $('.fa-chevron-down').click(function(event) {
+            event.preventDefault();
+            var collapseSection = $(this).closest('.card-header').next('.collapse');
+            collapseSection.collapse('toggle');
+            $(this).toggleClass('rotated');
+        });
+    });
+</script>
+<style>
+    .rotated { transform: rotate(180deg); }
+</style>
+
+{% endblock %}

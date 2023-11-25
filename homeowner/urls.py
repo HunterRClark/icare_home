@@ -9,6 +9,7 @@ from .views import (
     HomeUpdateView,
     HomeDeleteView,
     HomeDetailView,
+    DashboardView,
 )
 
 app_name = 'homeowner'
@@ -22,6 +23,7 @@ urlpatterns = [
     path('homes/<int:pk>/', HomeDetailView.as_view(), name='home_detail'),  # Details of a specific home
     path('homes/<int:pk>/edit/', HomeUpdateView.as_view(), name='home_edit'),  # Edit an existing home
     path('homes/<int:pk>/delete/', HomeDeleteView.as_view(), name='home_delete'),  # Delete an existing home
+    path('dashboard/', DashboardView.as_view(), name='dashboard'), # Dashboard View
     # Add other URL patterns for homeowner app here
 ]
 
