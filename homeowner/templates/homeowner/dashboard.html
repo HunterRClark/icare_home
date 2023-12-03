@@ -1,4 +1,5 @@
 {% extends 'base_generic.html' %}
+<div>Debug: Currently selected home ID is {{ selected_home_id }}</div>
 
 {% block title %}Dashboard{% endblock %}
 
@@ -23,7 +24,6 @@
             </div>
         </div>
     </div>
-
     <!-- Homes Details - Collapsible Sections -->
 {% for home in homes %}
     <div class="card mb-3">
@@ -65,45 +65,74 @@
         <div class="card">
             <div class="card-header">Notifications</div>
             <div class="card-body">
-                <p>No new notifications.</p>
+                {% if notifications %}
+                    <form method="post" action="{% url 'homeowner:mark_notification_read' %}">
+                        {% csrf_token %}
+                        {% for notification in notifications %}
+                            <div class="alert alert-info">
+                                <strong>{{ notification.title }}</strong>
+                                <p>{{ notification.message }}</p>
+                                <button type="submit" name="notification_id" value="{{ notification.id }}" class="btn btn-sm btn-link">Mark as read</button>
+                            </div>
+                        {% endfor %}
+                    </form>
+                {% else %}
+                    <p>No new notifications.</p>
+                {% endif %}
             </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <!-- Find Deals Section -->
-        <div class="card">
-            <div class="card-header">
-                <h4>Find Deals</h4>
+</div>
+
+<!-- Home Selection for Deals (Part of the Form) -->
+<!-- Home Selection Dropdown -->
+<form method="post" action="{% url 'homeowner:dashboard' %}">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="homeSelect">Select Home for Deals:</label>
+        <select name="selected_home_id" id="homeSelect" class="form-control" onchange="this.form.submit()">
+            {% for home in homes %}
+                <option value="{{ home.id }}" {% if home.id|stringformat:"s" == selected_home_id|stringformat:"s" %}selected{% endif %}>
+                    {{ home.address }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+</form>
+<!-- Find Deals Section -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">Find Deals</h4>
+        <!-- Button to View Deals -->
+        <a href="{% url 'homeowner:deal_list' %}" class="btn btn-primary">View My Deals</a>
+    </div>
+    <div class="card-body">
+        <p>Select the type of deal you're interested in:</p>
+        <div class="list-group mb-3">
+            <button type="button" class="list-group-item list-group-item-action" onclick="showDealForm('internet')">Internet</button>
+            <button type="button" class="list-group-item list-group-item-action" onclick="showDealForm('landscaping')">Landscaping</button>
+            <button type="button" class="list-group-item list-group-item-action" onclick="showDealForm('phonePlan')">Phone Plan</button>
+            <!-- More deal types as needed -->
+        </div>
+
+        <div id="dealFormContainer">
+            <!-- Internet Deals Form (Initially Hidden) -->
+            <div id="internetDealsForm" style="display: none;">
+                <form method="post">
+                    {% csrf_token %}
+                    <p>Current internet speed Mbps: {{ internet_deals_form.current_internet_speed }}</p>
+                    <p>Recommended internet speed Mbps: {{ internet_deals_form.recommended_internet_speed }}</p>
+                    <p>Monthly payment $: {{ internet_deals_form.internet_monthly_payment }}</p>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
             </div>
-            <div class="card-body">
-                <p>Select the type of deal you're interested in:</p>
-                <div class="list-group mb-3">
-                    <button type="button" class="list-group-item list-group-item-action" onclick="showDealForm('internet')">Internet</button>
-                    <button type="button" class="list-group-item list-group-item-action" onclick="showDealForm('landscaping')">Landscaping</button>
-                    <button type="button" class="list-group-item list-group-item-action" onclick="showDealForm('phonePlan')">Phone Plan</button>
-                    <!-- More deal types as needed -->
-                </div>
-                <div id="dealFormContainer">
-                    <!-- Internet Deals Form (Initially Hidden) -->
-                    <div id="internetDealsForm" style="display: none;">
-                        <form method="post">
-                            {% csrf_token %}
-                            {{ internet_deals_form.home_address }}
-                            {{ internet_deals_form.current_internet_speed }}
-                            {{ internet_deals_form.recommended_internet_speed }}
-                            {{ internet_deals_form.internet_monthly_payment }}
-                            <button type="submit" class="btn btn-primary">Submit</button>
-                        </form>
-                    </div>
-                    <!-- Placeholder for Landscaping Deals Form -->
-                    <div id="landscapingDealsForm" style="display: none;">
-                        <p>Landscaping deals form will be loaded here...</p>
-                    </div>
-                    <!-- Placeholder for Phone Plan Deals Form -->
-                    <div id="phonePlanDealsForm" style="display: none;">
-                        <p>Phone plan deals form will be loaded here...</p>
-                    </div>
-                </div>
+            <!-- Placeholder for Landscaping Deals Form -->
+            <div id="landscapingDealsForm" style="display: none;">
+                <p>Landscaping deals form will be loaded here...</p>
+            </div>
+            <!-- Placeholder for Phone Plan Deals Form -->
+            <div id="phonePlanDealsForm" style="display: none;">
+                <p>Phone plan deals form will be loaded here...</p>
             </div>
         </div>
     </div>

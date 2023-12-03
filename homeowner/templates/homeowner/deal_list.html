@@ -1,0 +1,23 @@
+{% extends 'base_generic.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>My Deals</h2>
+
+    <!-- Placeholder for tabs or sections for different deal types -->
+    <div>
+        <!-- Internet Deals Section -->
+        <div>
+            <h3>Internet Deals</h3>
+            <!-- List Internet Deals here -->
+            {% for home in deals %}
+                <!-- Display deal info -->
+            {% empty %}
+                <p>No internet deals found.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Placeholder for other deal types like landscaping, phone plans, etc. -->
+    </div>
+</div>
+{% endblock %}

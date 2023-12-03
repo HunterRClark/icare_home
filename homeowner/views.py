@@ -1,9 +1,9 @@
 # homeowner/views.py
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
-from django.views import generic
+from django.views import generic, View
 from .forms import UserRegisterForm, ProfileForm, HomeForm, InternetDealsForm
-from .models import Profile, Home
+from .models import Profile, Home, Notification
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
@@ -123,25 +123,61 @@ class DashboardView(generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        user_home = Home.objects.filter(owner=user).first()
         context['profile'] = Profile.objects.get(user=user)
         context['homes'] = Home.objects.filter(owner=user)
+        context['notifications'] = Notification.objects.filter(user=user, read=False)
 
-        # Initialize the form
-        context['internet_deals_form'] = InternetDealsForm(instance=user_home, user=user)  # Adjust as needed
+        # Retrieve the selected home ID from the session
+        selected_home_id = self.request.session.get('selected_home_id', None)
+        if selected_home_id is None and user.homes.exists():
+            selected_home_id = user.homes.first().id
+            self.request.session['selected_home_id'] = selected_home_id
 
+        selected_home = Home.objects.get(id=selected_home_id) if selected_home_id else None
+        context['selected_home_id'] = selected_home_id
+        context['internet_deals_form'] = InternetDealsForm(instance=selected_home)
+        print("In get_context_data, selected_home_id:", selected_home_id)
+        
         return context
 
     def post(self, request, *args, **kwargs):
-        form = InternetDealsForm(request.POST)
-        if form.is_valid():
-            # Save the form and associate it with the user's home
-            internet_deal = form.save(commit=False)
-            internet_deal.owner = request.user  # Assuming the Home model has an 'owner' field
-            internet_deal.save()
+        selected_home_id = request.POST.get('selected_home_id')
+        print("In post method, selected_home_id from POST:", selected_home_id) 
 
-            # Redirect to the dashboard to show a fresh form
-            return redirect('homeowner:dashboard')  # Ensure this is the correct named URL for your dashboard
-        else:
-            # If the form is not valid, re-render the dashboard with the form errors
-            return self.render_to_response(self.get_context_data(internet_deals_form=form))
+        if selected_home_id:
+            request.session['selected_home_id'] = selected_home_id
+            request.session.save()
+
+        # Refresh context with updated selected_home_id
+        context = self.get_context_data(**kwargs)
+        context['selected_home_id'] = selected_home_id
+
+        if 'submit_deals_form' in request.POST:
+            selected_home = Home.objects.get(id=selected_home_id) if selected_home_id else None
+            form = InternetDealsForm(request.POST, instance=selected_home)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Your deal information has been updated.')
+                return redirect('homeowner:dashboard')
+            else:
+                context['internet_deals_form'] = form
+        print("In post method, selected_home_id to be rendered:", selected_home_id)
+        return render(request, self.template_name, context)
+
+@method_decorator(login_required, name='dispatch')
+class MarkNotificationReadView(View):
+    def post(self, request, *args, **kwargs):
+        notification_id = request.POST.get('notification_id')
+        notification = get_object_or_404(Notification, id=notification_id, user=request.user)
+        notification.read = True
+        notification.save()
+        return redirect('homeowner:dashboard')
+
+@method_decorator(login_required, name='dispatch')
+class DealListView(generic.ListView):
+    model = Home  # Assuming the deal preferences are stored in the Home model
+    template_name = 'homeowner/deal_list.html'
+    context_object_name = 'deals'
+
+    def get_queryset(self):
+        return self.request.user.homes.all()
