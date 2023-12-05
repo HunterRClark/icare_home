@@ -3,7 +3,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Profile, Home
+from .models import Profile, Home, Business
 
 # Your existing UserRegisterForm
 class UserRegisterForm(UserCreationForm):
@@ -29,6 +29,16 @@ class UserRegisterForm(UserCreationForm):
         if commit:
             user.save()
 
+            # Create a Profile instance with basic information for all users
+            Profile.objects.update_or_create(
+                user=user,
+                defaults={
+                    'user_type': self.cleaned_data['user_type'],
+                    'phone_number': self.cleaned_data.get('phone_number', ''),
+                    # Other common fields if needed
+                }
+            )
+
             if self.cleaned_data['user_type'] == 'business':
                 # Create a Business instance for users registering as a business
                 Business.objects.create(
@@ -37,15 +47,6 @@ class UserRegisterForm(UserCreationForm):
                     zip_code=self.cleaned_data['zip_code'],
                     business_type=self.cleaned_data['business_type'],
                     owner=user
-                )
-            else:
-                # Create or update the Profile instance for homeowner users
-                Profile.objects.update_or_create(
-                    user=user, 
-                    defaults={
-                        'phone_number': self.cleaned_data.get('phone_number', ''),
-                        # Add other homeowner-specific fields here
-                    }
                 )
 
         return user
