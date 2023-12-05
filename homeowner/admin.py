@@ -1,10 +1,12 @@
 from django.contrib import admin
 # Register your models here.
 from django.contrib import admin
-from .models import Profile, Home, Notification
+from .models import Profile, Home, Notification, Business, EmailInvitation
 
 admin.site.register(Profile)
 admin.site.register(Home)
+admin.site.register(EmailInvitation)
+admin.site.register(Business)
 
 # Optional: Custom Admin for Notification
 class NotificationAdmin(admin.ModelAdmin):

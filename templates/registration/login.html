@@ -12,6 +12,10 @@
     <div class="col-md-6 offset-md-3">
       <h2 class="mb-4 text-center">Login</h2>
       <form method="post" action="{% url 'login' %}">
+        <div class="form-group">
+          <label for="id_user_type">{{ form.user_type.label }}</label>
+          {{ form.user_type }}
+      </div>
         {% csrf_token %}
         {% for field in form %}
           <div class="form-group">

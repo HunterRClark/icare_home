@@ -11,13 +11,24 @@
             <h3>Internet Deals</h3>
             <!-- List Internet Deals here -->
             {% for home in deals %}
-                <!-- Display deal info -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        {{ home.address }} - Internet Deal
+                    </div>
+                    <div class="card-body">
+                        <p><strong>Current Internet Speed:</strong> {{ home.current_internet_speed }} Mbps</p>
+                        <p><strong>Recommended Internet Speed:</strong> {{ home.recommended_internet_speed }} Mbps</p>
+                        <p><strong>Monthly Payment:</strong> ${{ home.internet_monthly_payment }}</p>
+                        <!-- Add additional fields if necessary -->
+                    </div>
+                </div>
             {% empty %}
                 <p>No internet deals found.</p>
             {% endfor %}
         </div>
 
         <!-- Placeholder for other deal types like landscaping, phone plans, etc. -->
+        <!-- Add similar sections for other deal types -->
     </div>
 </div>
 {% endblock %}

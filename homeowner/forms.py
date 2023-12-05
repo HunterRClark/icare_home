@@ -10,10 +10,15 @@ class UserRegisterForm(UserCreationForm):
     email = forms.EmailField()
     first_name = forms.CharField(required=True)
     last_name = forms.CharField(required=True)
+    business_name = forms.CharField(required=False, max_length=255)
+    business_address = forms.CharField(required=False, max_length=255)
+    zip_code = forms.CharField(required=False, max_length=5)  # Adjusted max_length for zip code
+    user_type = forms.ChoiceField(choices=Profile.USER_TYPE_CHOICES, required=True, label="I am registering as a")
+    business_type = forms.ChoiceField(choices=Profile.BUSINESS_TYPES, required=False, label="Business Type")
 
     class Meta:
         model = User
-        fields = ['username','first_name', 'last_name', 'email', 'password1', 'password2']
+        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2', 'user_type', 'business_name', 'business_type', 'business_address', 'zip_code']
 
     def save(self, commit=True):
         user = super(UserRegisterForm, self).save(commit=False)
@@ -24,8 +29,25 @@ class UserRegisterForm(UserCreationForm):
         if commit:
             user.save()
 
-        # Create or update the profile instance
-        Profile.objects.update_or_create(user=user)
+            if self.cleaned_data['user_type'] == 'business':
+                # Create a Business instance for users registering as a business
+                Business.objects.create(
+                    name=self.cleaned_data['business_name'],
+                    address=self.cleaned_data['business_address'],
+                    zip_code=self.cleaned_data['zip_code'],
+                    business_type=self.cleaned_data['business_type'],
+                    owner=user
+                )
+            else:
+                # Create or update the Profile instance for homeowner users
+                Profile.objects.update_or_create(
+                    user=user, 
+                    defaults={
+                        'phone_number': self.cleaned_data.get('phone_number', ''),
+                        # Add other homeowner-specific fields here
+                    }
+                )
+
         return user
 
 # Form for user profile

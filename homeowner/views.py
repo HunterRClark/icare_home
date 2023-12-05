@@ -141,28 +141,38 @@ class DashboardView(generic.TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
+        print("Form submitted")
         selected_home_id = request.POST.get('selected_home_id')
-        print("In post method, selected_home_id from POST:", selected_home_id) 
+        print("In post method, selected_home_id from POST:", selected_home_id)
 
         if selected_home_id:
+            selected_home = Home.objects.get(id=selected_home_id)
             request.session['selected_home_id'] = selected_home_id
             request.session.save()
 
-        # Refresh context with updated selected_home_id
-        context = self.get_context_data(**kwargs)
-        context['selected_home_id'] = selected_home_id
+            if 'submit_deals_form' in request.POST:
+                print("Deals form submitted")
+                print("POST data:", request.POST)
+                
+                # Manually update the selected home with form data
+                selected_home.current_internet_speed = request.POST.get('current_internet_speed')
+                selected_home.recommended_internet_speed = request.POST.get('recommended_internet_speed')
+                selected_home.internet_monthly_payment = request.POST.get('internet_monthly_payment')
+                selected_home.save()
 
-        if 'submit_deals_form' in request.POST:
-            selected_home = Home.objects.get(id=selected_home_id) if selected_home_id else None
-            form = InternetDealsForm(request.POST, instance=selected_home)
-            if form.is_valid():
-                form.save()
+                print("Updated Home:", selected_home)
                 messages.success(request, 'Your deal information has been updated.')
                 return redirect('homeowner:dashboard')
             else:
-                context['internet_deals_form'] = form
+                print("Not a deals form submission")
+        else:
+            print("No selected home id found")
+            messages.error(request, 'Please select a home.')
+
+        context = self.get_context_data(**kwargs)
         print("In post method, selected_home_id to be rendered:", selected_home_id)
         return render(request, self.template_name, context)
+
 
 @method_decorator(login_required, name='dispatch')
 class MarkNotificationReadView(View):
@@ -181,3 +191,27 @@ class DealListView(generic.ListView):
 
     def get_queryset(self):
         return self.request.user.homes.all()
+
+@method_decorator(login_required, name='dispatch')
+class BusinessDashboardView(generic.TemplateView):
+    template_name = 'homeowner/business_dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile = self.request.user.profile
+
+        # Redirect if not a business user
+        if profile.user_type != 'business':
+            return redirect('homeowner:dashboard')
+
+        # Business-specific context can be added here
+        context['profile'] = profile
+        return context
+
+@method_decorator(login_required, name='dispatch')
+class DashboardRedirectView(View):
+    def get(self, request, *args, **kwargs):
+        if request.user.profile.user_type == 'business':
+            return redirect('homeowner:business_dashboard')
+        else:
+            return redirect('homeowner:dashboard')

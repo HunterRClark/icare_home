@@ -11,7 +11,9 @@ from .views import (
     HomeDetailView,
     DashboardView,
     MarkNotificationReadView,
-    DealListView
+    DealListView,
+    BusinessDashboardView,
+    DashboardRedirectView
 )
 
 app_name = 'homeowner'
@@ -28,6 +30,8 @@ urlpatterns = [
     path('dashboard/', DashboardView.as_view(), name='dashboard'), # Dashboard View
     path('notifications/mark-as-read/', MarkNotificationReadView.as_view(), name='mark_notification_read'),
     path('deals/', DealListView.as_view(), name='deal_list'),
+    path('business-dashboard/', BusinessDashboardView.as_view(), name='business_dashboard'),
+    path('dashboard-redirect/', DashboardRedirectView.as_view(), name='dashboard_redirect'),
     # Add other URL patterns for homeowner app here
 ]
 

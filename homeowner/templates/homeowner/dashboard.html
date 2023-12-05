@@ -120,9 +120,24 @@
             <div id="internetDealsForm" style="display: none;">
                 <form method="post">
                     {% csrf_token %}
-                    <p>Current internet speed Mbps: {{ internet_deals_form.current_internet_speed }}</p>
-                    <p>Recommended internet speed Mbps: {{ internet_deals_form.recommended_internet_speed }}</p>
-                    <p>Monthly payment $: {{ internet_deals_form.internet_monthly_payment }}</p>
+                    <input type="hidden" name="submit_deals_form" value="true">
+                    <input type="hidden" name="selected_home_id" value="{{ selected_home_id }}">
+                    <input type="hidden" name="home_address" value="{{ internet_deals_form.instance.home_address }}">
+                    
+                    <!-- Form Fields for User Input -->
+                    <div class="form-group">
+                        <label for="id_current_internet_speed">Current Internet Speed Mbps:</label>
+                        {{ internet_deals_form.current_internet_speed }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_recommended_internet_speed">Recommended Internet Speed Mbps:</label>
+                        {{ internet_deals_form.recommended_internet_speed }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_internet_monthly_payment">Monthly Payment $:</label>
+                        {{ internet_deals_form.internet_monthly_payment }}
+                    </div>
+                    
                     <button type="submit" class="btn btn-primary">Submit</button>
                 </form>
             </div>
@@ -135,8 +150,6 @@
                 <p>Phone plan deals form will be loaded here...</p>
             </div>
         </div>
-    </div>
-</div>
 <!-- JavaScript for Dynamic Deal Form Loading -->
 <script>
     function showDealForm(dealType) {

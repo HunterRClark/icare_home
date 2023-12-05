@@ -1,24 +1,65 @@
-<!-- homeowner/templates/homeowner/register.html -->
 {% extends "base_generic.html" %}
 {% block content %}
 <div class="container mt-4">
   <h2>Register</h2>
   <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
     {% csrf_token %}
-    {% for field in form %}
+
+    <!-- Manually render 'I am registering as' field -->
     <div class="form-group">
-        {{ field.label_tag }} {{ field }}
-        {% if field.help_text %}
-        <small class="form-text text-muted">{{ field.help_text }}</small>
-        {% endif %}
-        {% for error in field.errors %}
-        <div class="invalid-feedback">
-            {{ error }}
-        </div>
-        {% endfor %}
+        {{ form.user_type.label_tag }} {{ form.user_type }}
     </div>
+
+    <!-- Manually render 'Business Name' and 'Business Type' fields (Initially hidden if not 'business') -->
+    <div class="form-group {% if form.user_type.value != 'business' %}d-none{% endif %} business-field">
+        {{ form.business_name.label_tag }} {{ form.business_name }}
+    </div>
+    <div class="form-group {% if form.user_type.value != 'business' %}d-none{% endif %} business-type-field">
+        {{ form.business_type.label_tag }} {{ form.business_type }}
+    </div>
+    <div class="form-group {% if form.user_type.value != 'business' %}d-none{% endif %} zip-code-field">
+      {{ form.zip_code.label_tag }} {{ form.zip_code }}
+    </div>
+    <div class="form-group {% if form.user_type.value != 'business' %}d-none{% endif %} business-address-field">
+      {{ form.business_address.label_tag }} {{ form.business_address }}
+    </div>
+
+    <!-- Loop through the remaining fields -->
+    {% for field in form %}
+        {% if field.name != 'user_type' and field.name != 'business_name' and field.name != 'business_type' and field.name != 'zip_code' and field.name != 'business_address' %}
+            <div class="form-group">
+                {{ field.label_tag }} {{ field }}
+                {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                    <div class="invalid-feedback">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
     {% endfor %}
+
     <button type="submit" class="btn btn-primary">Register</button>
   </form>
 </div>
+
+<script>
+  // Script to show/hide the business name and business type fields based on user type
+  document.addEventListener('DOMContentLoaded', function () {
+    var userTypeField = document.querySelector('select[name="user_type"]');
+    var businessFields = document.querySelectorAll('.business-field, .business-type-field, .zip-code-field, .business-address-field');
+    
+    userTypeField.addEventListener('change', function() {
+      businessFields.forEach(function(field) {
+        if(userTypeField.value === 'business') {
+          field.classList.remove('d-none');
+        } else {
+          field.classList.add('d-none');
+        }
+      });
+    });
+  });
+</script>
 {% endblock %}
