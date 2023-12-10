@@ -2,16 +2,29 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views import generic, View
-from .forms import UserRegisterForm, ProfileForm, HomeForm, InternetDealsForm
-from .models import Profile, Home, Notification
+from .forms import UserRegisterForm, ProfileForm, HomeForm, InvitationForm, InternetDealsForm, DealForm, LandscapingDealsForm
+from .models import Profile, Home, Notification, Invitation, Business, Deal, match_internet_deals, LandscapingServiceRequest, LandscapingService
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponseForbidden
 import logging
 
 # Set up logging (typically at the top of the file)
 logger = logging.getLogger(__name__)
+
+def notify_landscaping_businesses(home, service_type):
+    landscaping_businesses = Business.objects.filter(
+        business_type='Landscaping',
+        landscaping_services_offered__service_type=service_type
+    )
+    for business in landscaping_businesses:
+        Notification.objects.create(
+            user=business.owner,
+            title="New Landscaping Opportunity",
+            message=f"A new request for {service_type} is available in your area for {home.address}.",
+            notification_type='deal'
+        )
 
 # Existing RegisterView class
 class RegisterView(generic.CreateView):
@@ -123,21 +136,42 @@ class DashboardView(generic.TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
-        context['profile'] = Profile.objects.get(user=user)
-        context['homes'] = Home.objects.filter(owner=user)
+
+        # Ensure the user has a profile, create one if it doesn't exist
+        profile, created = Profile.objects.get_or_create(user=user)
+        context['profile'] = profile
+
+        # Fetch homes and handle the case where there are none
+        homes = Home.objects.filter(owner=user)
+        if homes.exists():
+            context['homes'] = homes
+
+            # Retrieve the selected home ID from the session
+            selected_home_id = self.request.session.get('selected_home_id', None)
+            if selected_home_id is None:
+                selected_home_id = homes.first().id
+                self.request.session['selected_home_id'] = selected_home_id
+
+            selected_home = Home.objects.get(id=selected_home_id)
+            context['selected_home_id'] = selected_home_id
+            context['internet_deals_form'] = InternetDealsForm(instance=selected_home)
+
+            # Initialize the LandscapingDealsForm with initial values
+            initial_landscaping_data = {
+                'lawn_size': selected_home.lawn_size,
+                'flower_bed_size': selected_home.flower_bed_size,
+                'number_of_trees': selected_home.number_of_trees
+            }
+            context['landscaping_deals_form'] = LandscapingDealsForm(initial=initial_landscaping_data)
+        else:
+            context['no_homes_message'] = "No homes added yet."
+            context['internet_deals_form'] = InternetDealsForm()  # Initialize an empty form
+            initial_landscaping_data = {}  # Initialize with empty data
+            context['landscaping_deals_form'] = LandscapingDealsForm(initial=initial_landscaping_data)
+
+        # Fetch unread notifications
         context['notifications'] = Notification.objects.filter(user=user, read=False)
 
-        # Retrieve the selected home ID from the session
-        selected_home_id = self.request.session.get('selected_home_id', None)
-        if selected_home_id is None and user.homes.exists():
-            selected_home_id = user.homes.first().id
-            self.request.session['selected_home_id'] = selected_home_id
-
-        selected_home = Home.objects.get(id=selected_home_id) if selected_home_id else None
-        context['selected_home_id'] = selected_home_id
-        context['internet_deals_form'] = InternetDealsForm(instance=selected_home)
-        print("In get_context_data, selected_home_id:", selected_home_id)
-        
         return context
 
     def post(self, request, *args, **kwargs):
@@ -153,7 +187,7 @@ class DashboardView(generic.TemplateView):
             if 'submit_deals_form' in request.POST:
                 print("Deals form submitted")
                 print("POST data:", request.POST)
-                
+            
                 # Manually update the selected home with form data
                 selected_home.current_internet_speed = request.POST.get('current_internet_speed')
                 selected_home.recommended_internet_speed = request.POST.get('recommended_internet_speed')
@@ -161,16 +195,33 @@ class DashboardView(generic.TemplateView):
                 selected_home.save()
 
                 print("Updated Home:", selected_home)
-                messages.success(request, 'Your deal information has been updated.')
+                messages.success(request, 'Your internet deal information has been updated.')
+                return redirect('homeowner:dashboard')
+
+            elif 'submit_landscaping_form' in request.POST:
+                print("Landscaping form submitted")
+                print("POST data:", request.POST)
+
+                landscaping_form = LandscapingDealsForm(request.POST)
+                if landscaping_form.is_valid():
+                    # Create a new LandscapingServiceRequest instance
+                    LandscapingServiceRequest.objects.create(
+                        home=selected_home,
+                        service_type=landscaping_form.cleaned_data['service_type']
+                    )
+
+                    # Notify landscaping businesses
+                    notify_landscaping_businesses(selected_home, landscaping_form.cleaned_data['service_type'])
+
+                    messages.success(request, 'Your landscaping service request has been submitted.')
+                else:
+                    messages.error(request, 'There was an error with your landscaping service request submission.')
+
                 return redirect('homeowner:dashboard')
             else:
                 print("Not a deals form submission")
-        else:
-            print("No selected home id found")
-            messages.error(request, 'Please select a home.')
 
         context = self.get_context_data(**kwargs)
-        print("In post method, selected_home_id to be rendered:", selected_home_id)
         return render(request, self.template_name, context)
 
 
@@ -181,7 +232,11 @@ class MarkNotificationReadView(View):
         notification = get_object_or_404(Notification, id=notification_id, user=request.user)
         notification.read = True
         notification.save()
-        return redirect('homeowner:dashboard')
+        # Redirect to the appropriate dashboard based on user type
+        if request.user.profile.user_type == 'business':
+            return redirect('homeowner:business_dashboard')
+        else:
+            return redirect('homeowner:dashboard')
 
 @method_decorator(login_required, name='dispatch')
 class DealListView(generic.ListView):
@@ -192,20 +247,37 @@ class DealListView(generic.ListView):
     def get_queryset(self):
         return self.request.user.homes.all()
 
+
 @method_decorator(login_required, name='dispatch')
 class BusinessDashboardView(generic.TemplateView):
     template_name = 'homeowner/business_dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        business = Business.objects.filter(owner=self.request.user).first()
+
+        # Redirect if the user is not associated with any business
+        if not business:
+            return redirect('homeowner:dashboard')
+
         profile = self.request.user.profile
 
         # Redirect if not a business user
         if profile.user_type != 'business':
             return redirect('homeowner:dashboard')
 
-        # Business-specific context can be added here
+        # Fetch unread notifications for the business user
+        context['notifications'] = Notification.objects.filter(
+            user=self.request.user, 
+            read=False
+        )
+
+        # Business-specific context
         context['profile'] = profile
+        context['business'] = business  # Added business object to context
+        context['business_type'] = business.business_type  # Added business type to context
+        context['invitation_form'] = InvitationForm()
+        context['create_deal_form'] = DealForm(business=business)
         return context
 
 @method_decorator(login_required, name='dispatch')
@@ -215,3 +287,57 @@ class DashboardRedirectView(View):
             return redirect('homeowner:business_dashboard')
         else:
             return redirect('homeowner:dashboard')
+
+@method_decorator(login_required, name='dispatch')
+class SendInvitationView(generic.CreateView):
+    model = Invitation
+    form_class = InvitationForm
+    template_name = 'homeowner/send_invitation.html'
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.profile.is_business_admin:
+            return HttpResponseForbidden("You do not have permission to access this page.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super(SendInvitationView, self).get_form_kwargs()
+        # Assuming the Business model is linked to the User model
+        user_business = Business.objects.filter(owner=self.request.user).first()
+        kwargs.update({'business': user_business})  # Pass the business instance to the form
+        return kwargs
+
+    def form_valid(self, form):
+        invitation = form.save(commit=False)
+        invitation.sender = self.request.user  # Set the sender to the current logged-in user
+        invitation.save()
+
+        # Here, you can add the logic to send an email invitation
+        messages.success(self.request, "Invitation sent successfully!")
+        return redirect('homeowner:dashboard')
+
+@method_decorator(login_required, name='dispatch')
+class CreateDealView(generic.CreateView):
+    model = Deal
+    form_class = DealForm
+    template_name = 'homeowner/create_deal.html'
+
+    def get_form_kwargs(self):
+        kwargs = super(CreateDealView, self).get_form_kwargs()
+        business = self.request.user.business  # Assuming each User has a related Business instance
+        kwargs.update({'business': business})
+        return kwargs
+
+    def form_valid(self, form):
+        deal = form.save(commit=False)
+        deal.business = self.request.user  # Assign the User instance directly
+        deal.deal_type = self.request.user.business.business_type.lower()  # Set deal type based on the business type
+        deal.save()
+
+        # Call the matching logic after saving the deal
+        match_internet_deals(deal)
+
+        return super(CreateDealView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse_lazy('homeowner:business_dashboard')
+    

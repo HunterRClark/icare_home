@@ -24,9 +24,14 @@
       {{ form.business_address.label_tag }} {{ form.business_address }}
     </div>
 
+    <!-- Manually render 'Landscaping Services Offered' field (Initially hidden if not 'Landscaping' business type) -->
+  <div class="form-group {% if form.user_type.value != 'business' or form.business_type.value != 'Landscaping' %}d-none{% endif %}" id="landscapingServicesField">
+      {{ form.landscaping_services_offered.label_tag }} {{ form.landscaping_services_offered }}
+  </div>
+
     <!-- Loop through the remaining fields -->
     {% for field in form %}
-        {% if field.name != 'user_type' and field.name != 'business_name' and field.name != 'business_type' and field.name != 'zip_code' and field.name != 'business_address' %}
+    {% if field.name != 'user_type' and field.name != 'business_name' and field.name != 'business_type' and field.name != 'zip_code' and field.name != 'business_address' and field.name != 'landscaping_services_offered' %}
             <div class="form-group">
                 {{ field.label_tag }} {{ field }}
                 {% if field.help_text %}
@@ -46,20 +51,36 @@
 </div>
 
 <script>
-  // Script to show/hide the business name and business type fields based on user type
+  // Script to show/hide the business and landscaping fields based on user type and business type
   document.addEventListener('DOMContentLoaded', function () {
     var userTypeField = document.querySelector('select[name="user_type"]');
+    var businessTypeField = document.querySelector('select[name="business_type"]');
     var businessFields = document.querySelectorAll('.business-field, .business-type-field, .zip-code-field, .business-address-field');
+    var landscapingServicesField = document.getElementById('landscapingServicesField');
     
-    userTypeField.addEventListener('change', function() {
+    function updateFields() {
+      var isBusiness = userTypeField.value === 'business';
+      var isLandscapingBusiness = isBusiness && businessTypeField.options[businessTypeField.selectedIndex].value === 'Landscaping';
+
       businessFields.forEach(function(field) {
-        if(userTypeField.value === 'business') {
+        if(isBusiness) {
           field.classList.remove('d-none');
         } else {
           field.classList.add('d-none');
         }
       });
-    });
+
+      if (isLandscapingBusiness) {
+        landscapingServicesField.classList.remove('d-none');
+      } else {
+        landscapingServicesField.classList.add('d-none');
+      }
+    }
+
+    userTypeField.addEventListener('change', updateFields);
+    businessTypeField.addEventListener('change', updateFields);
+    updateFields(); // Call updateFields on page load to set the correct field visibility
   });
 </script>
 {% endblock %}
+

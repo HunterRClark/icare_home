@@ -4,7 +4,54 @@
     <h2>Business Dashboard</h2>
     <p>Welcome, {{ profile.user.username }}!</p>
 
+    <!-- Notifications Section -->
+    <div class="card mt-4">
+        <div class="card-header">Notifications</div>
+        <div class="card-body">
+            {% if notifications %}
+                <form method="post" action="{% url 'homeowner:mark_notification_read' %}">
+                    {% csrf_token %}
+                    {% for notification in notifications %}
+                        <div class="alert alert-info">
+                            <strong>{{ notification.title }}</strong>
+                            <p>{{ notification.message }}</p>
+                            <!-- Add a button to respond to the notification, if applicable -->
+                            {% if notification.deal %}
+                                <a href="{% url 'homeowner:respond_to_quote_request' notification.deal.id %}" class="btn btn-sm btn-success">Respond with Quote</a>
+                            {% endif %}
+                            <button type="submit" name="notification_id" value="{{ notification.id }}" class="btn btn-sm btn-link">Mark as read</button>
+                        </div>
+                    {% endfor %}
+                </form>
+            {% else %}
+                <p>No new notifications.</p>
+            {% endif %}
+        </div>
+    </div>
+
     <!-- Business-specific content goes here -->
-    <p>This area can be used to display business-related information and functionalities.</p>
+    {% if request.user.profile.is_business_admin %}
+        <!-- Invitation Form Section -->
+        <div class="invite-section">
+            <h3>Invite a New Member</h3>
+            <form method="post" action="{% url 'homeowner:send_invitation' %}">
+                {% csrf_token %}
+                {{ invitation_form.as_p }}
+                <button type="submit" class="btn btn-primary">Send Invitation</button>
+            </form>
+        </div>
+    {% endif %}
+
+    <!-- Create Deal Form Section -->
+    {% if business_type == 'Internet' %}
+        <div class="mt-4">
+            <h3>Create a New Deal</h3>
+            <form method="post" action="{% url 'homeowner:create_deal' %}">
+                {% csrf_token %}
+                {{ create_deal_form.as_p }}
+                <button type="submit" class="btn btn-primary">Create Deal</button>
+            </form>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}

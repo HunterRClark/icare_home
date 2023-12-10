@@ -3,22 +3,35 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
-from .models import Profile, Home, Business
+from .models import Profile, Home, Business, Invitation, Deal, LandscapingServiceRequest, LandscapingService
 
-# Your existing UserRegisterForm
 class UserRegisterForm(UserCreationForm):
     email = forms.EmailField()
     first_name = forms.CharField(required=True)
     last_name = forms.CharField(required=True)
     business_name = forms.CharField(required=False, max_length=255)
     business_address = forms.CharField(required=False, max_length=255)
-    zip_code = forms.CharField(required=False, max_length=5)  # Adjusted max_length for zip code
     user_type = forms.ChoiceField(choices=Profile.USER_TYPE_CHOICES, required=True, label="I am registering as a")
     business_type = forms.ChoiceField(choices=Profile.BUSINESS_TYPES, required=False, label="Business Type")
+    zip_code = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(attrs={'placeholder': 'Zip Code'})
+    )
+    landscaping_services_offered = forms.ModelMultipleChoiceField(
+        queryset=LandscapingService.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Landscaping Services Offered"
+    )
 
     class Meta:
         model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2', 'user_type', 'business_name', 'business_type', 'business_address', 'zip_code']
+        fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2', 'user_type', 'business_name', 'business_type', 'business_address', 'zip_code', 'landscaping_services_offered']
+
+    def __init__(self, *args, **kwargs):
+        super(UserRegisterForm, self).__init__(*args, **kwargs)
+        # Hide the landscaping_services_offered field initially
+        self.fields['landscaping_services_offered'].widget.attrs['style'] = 'display;'
 
     def save(self, commit=True):
         user = super(UserRegisterForm, self).save(commit=False)
@@ -29,25 +42,28 @@ class UserRegisterForm(UserCreationForm):
         if commit:
             user.save()
 
-            # Create a Profile instance with basic information for all users
-            Profile.objects.update_or_create(
-                user=user,
-                defaults={
-                    'user_type': self.cleaned_data['user_type'],
-                    'phone_number': self.cleaned_data.get('phone_number', ''),
-                    # Other common fields if needed
-                }
-            )
+            profile_defaults = {
+                'user_type': self.cleaned_data['user_type'],
+                'phone_number': self.cleaned_data.get('phone_number', ''),
+                'business_name': self.cleaned_data.get('business_name', ''),
+                'business_type': self.cleaned_data.get('business_type', ''),
+                'zip_code': self.cleaned_data.get('zip_code', '') if self.cleaned_data['user_type'] == 'business' else None,
+                'business_address': self.cleaned_data.get('business_address', '')
+            }
+            Profile.objects.update_or_create(user=user, defaults=profile_defaults)
 
             if self.cleaned_data['user_type'] == 'business':
-                # Create a Business instance for users registering as a business
-                Business.objects.create(
+                business_instance = Business.objects.create(
                     name=self.cleaned_data['business_name'],
                     address=self.cleaned_data['business_address'],
                     zip_code=self.cleaned_data['zip_code'],
                     business_type=self.cleaned_data['business_type'],
                     owner=user
                 )
+
+                # Set landscaping services only for landscaping businesses
+                if self.cleaned_data['business_type'] == 'Landscaping':
+                    business_instance.landscaping_services_offered.set(self.cleaned_data['landscaping_services_offered'])
 
         return user
 
@@ -109,11 +125,12 @@ class HomeForm(forms.ModelForm):
             'mortgage_monthly_payment', 'mortgage_interest_rate', 'mortgage_start_date', 
             'mortgage_end_date', 'insurance_provider', 'insurance_policy_number', 
             'insurance_coverage_amount', 'insurance_premium', 'insurance_start_date', 
-            'insurance_end_date','recommended_internet_speed'
+            'insurance_end_date','recommended_internet_speed', 'zip_code'
         ]
 
         widgets = {
             'address': forms.TextInput(attrs={'class': 'form-control'}),
+            'zip_code': forms.NumberInput(attrs={'class': 'form-control'}),
             'floor_plan': forms.FileInput(attrs={'class': 'form-control-file'}),
             'number_of_bedrooms': forms.NumberInput(attrs={'class': 'form-control'}),
             'number_of_bathrooms': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -151,16 +168,18 @@ class InternetDealsForm(forms.ModelForm):
 
     class Meta:
         model = Home
-        fields = ['home_address', 'current_internet_speed', 'recommended_internet_speed', 'internet_monthly_payment']
+        fields = ['home_address', 'current_internet_speed', 'recommended_internet_speed', 'internet_monthly_payment', 'internet_price_threshold']
         labels = {
             'current_internet_speed': 'Current Internet Speed (Mbps)',
             'recommended_internet_speed': 'Recommended Internet Speed (Mbps)',
-            'internet_monthly_payment': 'Monthly Payment ($)'
+            'internet_monthly_payment': 'Monthly Payment ($)',
+            'internet_price_threshold': 'Max Price For Better Internet'
         }
         widgets = {
             'current_internet_speed': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Current Internet Speed (Mbps)'}),
             'recommended_internet_speed': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Recommended Internet Speed (Mbps)'}),
             'internet_monthly_payment': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Monthly Payment ($)'}),
+            'internet_price_threshold': forms.NumberInput(attrs={'class': 'form-control', 'placeholder': 'Max Accepted Price For Better Internet'}),
         }
         help_texts = {
             'recommended_internet_speed': ('Not sure what speed you need? '
@@ -172,3 +191,87 @@ class InternetDealsForm(forms.ModelForm):
         super(InternetDealsForm, self).__init__(*args, **kwargs)
         if user:
             self.fields['home_address'].queryset = Home.objects.filter(owner=user)
+
+class InvitationForm(forms.ModelForm):
+    class Meta:
+        model = Invitation
+        fields = ['email']
+
+    def __init__(self, *args, **kwargs):
+        self.business = kwargs.pop('business', None)
+        super(InvitationForm, self).__init__(*args, **kwargs)
+        self.fields['email'].label = "Invitee's Email Address"
+
+class DealForm(forms.ModelForm):
+    class Meta:
+        model = Deal
+        fields = ['zip_code', 'provider_name', 'internet_speed_offered', 'monthly_cost', 'deal_expiration_date']
+
+    def __init__(self, *args, **kwargs):
+        business = kwargs.pop('business', None)
+        super(DealForm, self).__init__(*args, **kwargs)
+
+        if business and business.business_type == 'Internet':
+            self.fields['zip_code'].initial = business.zip_code
+            self.fields['zip_code'].widget = forms.HiddenInput()
+            # Retain only relevant fields for Internet providers
+            self.fields['provider_name'].initial = business.name
+            del self.fields['deal_expiration_date']  # Remove if not relevant
+            # Add other adjustments as needed
+
+class LandscapingDealsForm(forms.ModelForm):
+    SERVICE_TYPE_CHOICES = [
+        ('', 'Choose a service...'),
+        ('lawn_mowing', 'Lawn Mowing'),
+        ('tree_trimming', 'Tree Trimming'),
+        ('lawn_care', 'Lawn Care'),
+    ]
+    service_type = forms.ChoiceField(
+        choices=SERVICE_TYPE_CHOICES, 
+        required=True, 
+        widget=forms.Select(attrs={
+            'class': 'form-control', 
+            'onchange': 'updateLandscapingFields()'
+        })
+    )
+    # Assuming these fields are already part of the Home model
+    lawn_size = forms.DecimalField(
+        max_digits=7, 
+        decimal_places=2, 
+        required=False, 
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control', 
+            'placeholder': 'Area of Lawn (sqft)'
+        })
+    )
+    flower_bed_size = forms.DecimalField(
+        max_digits=7, 
+        decimal_places=2, 
+        required=False, 
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control', 
+            'placeholder': 'Area of Flower Beds (sqft)'
+        })
+    )
+    number_of_trees = forms.IntegerField(
+        required=False, 
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control', 
+            'placeholder': 'Total Number of Trees'
+        })
+    )
+
+    class Meta:
+        model = Home
+        fields = ['lawn_size', 'flower_bed_size', 'number_of_trees']
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(LandscapingDealsForm, self).__init__(*args, **kwargs)
+        # Initialize these fields with existing data from the user's home
+        if user:
+            home = Home.objects.filter(owner=user).first()
+            if home:
+                self.fields['lawn_size'].initial = home.lawn_size
+                self.fields['flower_bed_size'].initial = home.flower_bed_size
+                self.fields['number_of_trees'].initial = home.number_of_trees

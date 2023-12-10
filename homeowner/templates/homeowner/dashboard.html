@@ -137,14 +137,42 @@
                         <label for="id_internet_monthly_payment">Monthly Payment $:</label>
                         {{ internet_deals_form.internet_monthly_payment }}
                     </div>
+                    <div class="form-group">
+                        <label for="id_internet_price_threshold">Max spend $:</label>
+                        {{ internet_deals_form.internet_price_threshold }}
+                    </div>
                     
                     <button type="submit" class="btn btn-primary">Submit</button>
                 </form>
             </div>
             <!-- Placeholder for Landscaping Deals Form -->
-            <div id="landscapingDealsForm" style="display: none;">
-                <p>Landscaping deals form will be loaded here...</p>
-            </div>
+<div id="landscapingDealsForm" style="display: none;">
+    <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="submit_landscaping_form" value="true">
+        <input type="hidden" name="selected_home_id" value="{{ selected_home_id }}">
+        
+        <!-- Form Fields for Landscaping User Input -->
+        <div class="form-group">
+            {{ landscaping_deals_form.service_type.label_tag }} 
+            {{ landscaping_deals_form.service_type }}
+        </div>
+        <div class="form-group" id="lawnSizeField" style="display: none;">
+            {{ landscaping_deals_form.lawn_size.label_tag }} 
+            {{ landscaping_deals_form.lawn_size }}
+        </div>
+        <div class="form-group" id="flowerBedSizeField" style="display: none;">
+            {{ landscaping_deals_form.flower_bed_size.label_tag }} 
+            {{ landscaping_deals_form.flower_bed_size }}
+        </div>
+        <div class="form-group" id="numberOfTreesField" style="display: none;">
+            {{ landscaping_deals_form.number_of_trees.label_tag }} 
+            {{ landscaping_deals_form.number_of_trees }}
+        </div>
+        
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+</div>
             <!-- Placeholder for Phone Plan Deals Form -->
             <div id="phonePlanDealsForm" style="display: none;">
                 <p>Phone plan deals form will be loaded here...</p>
@@ -163,11 +191,37 @@
             document.getElementById('internetDealsForm').style.display = 'block';
         } else if (dealType === 'landscaping') {
             document.getElementById('landscapingDealsForm').style.display = 'block';
+            updateLandscapingFields(); // Update the visibility of landscaping fields
         } else if (dealType === 'phonePlan') {
             document.getElementById('phonePlanDealsForm').style.display = 'block';
         }
         // Add similar logic for other deal types
     }
+
+    function updateLandscapingFields() {
+        // Get the value of the selected service type
+        var serviceType = document.getElementById('id_service_type').value;
+
+        // Hide all fields initially
+        document.getElementById('lawnSizeField').style.display = 'none';
+        document.getElementById('flowerBedSizeField').style.display = 'none';
+        document.getElementById('numberOfTreesField').style.display = 'none';
+
+        // Show fields based on the selected service type
+        if (serviceType === 'lawn_mowing') {
+            document.getElementById('lawnSizeField').style.display = 'block';
+        } else if (serviceType === 'tree_trimming') {
+            document.getElementById('numberOfTreesField').style.display = 'block';
+        } else if (serviceType === 'lawn_care') {
+            document.getElementById('lawnSizeField').style.display = 'block';
+            document.getElementById('flowerBedSizeField').style.display = 'block';
+        }
+    }
+
+    // Call updateLandscapingFields on page load to set the correct field visibility
+    document.addEventListener('DOMContentLoaded', function () {
+        updateLandscapingFields();
+    });
 </script>
 
 <!-- Font Awesome for Chevron Icon -->
