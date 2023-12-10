@@ -141,7 +141,11 @@
                         <label for="id_internet_price_threshold">Max spend $:</label>
                         {{ internet_deals_form.internet_price_threshold }}
                     </div>
-                    
+                    <div class="form-group">
+                        <small class="form-text text-muted">
+                            {{ internet_deals_form.recommended_internet_speed.help_text|safe }}
+                        </small>
+                    </div>
                     <button type="submit" class="btn btn-primary">Submit</button>
                 </form>
             </div>
@@ -160,6 +164,9 @@
         <div class="form-group" id="lawnSizeField" style="display: none;">
             {{ landscaping_deals_form.lawn_size.label_tag }} 
             {{ landscaping_deals_form.lawn_size }}
+            {% if landscaping_deals_form.lawn_size.help_text %}
+        <small class="form-text text-muted">{{ landscaping_deals_form.lawn_size.help_text|safe }}</small>
+            {% endif %}
         </div>
         <div class="form-group" id="flowerBedSizeField" style="display: none;">
             {{ landscaping_deals_form.flower_bed_size.label_tag }} 

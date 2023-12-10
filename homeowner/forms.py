@@ -242,7 +242,8 @@ class LandscapingDealsForm(forms.ModelForm):
         widget=forms.NumberInput(attrs={
             'class': 'form-control', 
             'placeholder': 'Area of Lawn (sqft)'
-        })
+        }),
+        help_text='Not sure of your lawn size? <a href="https://www.measuremylawn.com/" target="_blank">Measure it here</a>.'
     )
     flower_bed_size = forms.DecimalField(
         max_digits=7, 
