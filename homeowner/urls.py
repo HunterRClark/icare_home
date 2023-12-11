@@ -16,7 +16,8 @@ from .views import (
     DashboardRedirectView,
     DashboardView,
     SendInvitationView,
-    CreateDealView
+    CreateDealView,
+    BusinessOpportunityReportView
 )
 
 app_name = 'homeowner'
@@ -37,6 +38,7 @@ urlpatterns = [
     path('business-dashboard/', BusinessDashboardView.as_view(), name='business_dashboard'),
     path('send-invitation/', SendInvitationView.as_view(), name='send_invitation'),
     path('create-deal/', CreateDealView.as_view(), name='create_deal'),
+    path('business-opportunity-report/', BusinessOpportunityReportView.as_view(), name='business_opportunity_report'),
     # Add other URL patterns for homeowner app here
 ]
 

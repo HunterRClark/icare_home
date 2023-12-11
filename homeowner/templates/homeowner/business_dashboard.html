@@ -3,6 +3,7 @@
 <div class="container mt-4">
     <h2>Business Dashboard</h2>
     <p>Welcome, {{ profile.user.username }}!</p>
+    <a href="{% url 'homeowner:business_opportunity_report' %}" class="btn btn-primary">View Opportunity Report</a>
 
     <!-- Notifications Section -->
     <div class="card mt-4">

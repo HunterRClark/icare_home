@@ -238,3 +238,11 @@ def create_notification(user, deal):
     title = "New Internet Deal Available!"
     message = f"A new deal from {deal.provider_name} is available: {deal.internet_speed_offered} Mbps for ${deal.monthly_cost} per month."
     Notification.objects.create(user=user, title=title, message=message)
+
+class BusinessOpportunityReport(models.Model):
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='opportunity_reports')
+    created_at = models.DateTimeField(auto_now_add=True)
+    report_data = models.TextField()  # Simple text field for MVP
+
+    def __str__(self):
+        return f"Opportunity Report for {self.business.name} - {self.created_at.strftime('%Y-%m-%d')}"

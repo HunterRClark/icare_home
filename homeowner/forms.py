@@ -3,6 +3,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from .models import Profile, Home, Business, Invitation, Deal, LandscapingServiceRequest, LandscapingService
 
 class UserRegisterForm(UserCreationForm):
@@ -28,6 +29,18 @@ class UserRegisterForm(UserCreationForm):
         model = User
         fields = ['username', 'first_name', 'last_name', 'email', 'password1', 'password2', 'user_type', 'business_name', 'business_type', 'business_address', 'zip_code', 'landscaping_services_offered']
 
+    def clean_email(self):
+        email = self.cleaned_data['email'].lower()
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("This email address is already in use.")
+        return email
+    
+    def clean_email(self):
+        email = self.cleaned_data['email'].lower()
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("This email address is already in use.")
+        return email
+
     def __init__(self, *args, **kwargs):
         super(UserRegisterForm, self).__init__(*args, **kwargs)
         # Hide the landscaping_services_offered field initially
@@ -42,12 +55,17 @@ class UserRegisterForm(UserCreationForm):
         if commit:
             user.save()
 
+            # Set a default zip code for homeowners if not provided
+            zip_code_default = self.cleaned_data.get('zip_code', None)
+            if self.cleaned_data['user_type'] == 'homeowner' and not zip_code_default:
+                zip_code_default = 11111  # Default zip code for homeowners
+
             profile_defaults = {
                 'user_type': self.cleaned_data['user_type'],
                 'phone_number': self.cleaned_data.get('phone_number', ''),
                 'business_name': self.cleaned_data.get('business_name', ''),
                 'business_type': self.cleaned_data.get('business_type', ''),
-                'zip_code': self.cleaned_data.get('zip_code', '') if self.cleaned_data['user_type'] == 'business' else None,
+                'zip_code': zip_code_default,
                 'business_address': self.cleaned_data.get('business_address', '')
             }
             Profile.objects.update_or_create(user=user, defaults=profile_defaults)

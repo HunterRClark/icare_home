@@ -15,6 +15,8 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
 LOGIN_REDIRECT_URL = 'homeowner:dashboard_redirect'
 
 LOGIN_URL = 'login'

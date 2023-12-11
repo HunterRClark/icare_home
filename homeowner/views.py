@@ -3,11 +3,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views import generic, View
 from .forms import UserRegisterForm, ProfileForm, HomeForm, InvitationForm, InternetDealsForm, DealForm, LandscapingDealsForm
-from .models import Profile, Home, Notification, Invitation, Business, Deal, match_internet_deals, LandscapingServiceRequest, LandscapingService
+from .models import Profile, Home, Notification, Invitation, Business, Deal, match_internet_deals, LandscapingServiceRequest, LandscapingService, BusinessOpportunityReport
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.http import HttpResponseRedirect, HttpResponseForbidden
+from django.views.decorators.http import require_POST
 import logging
 
 # Set up logging (typically at the top of the file)
@@ -25,6 +26,32 @@ def notify_landscaping_businesses(home, service_type):
             message=f"A new request for {service_type} is available in your area for {home.address}.",
             notification_type='deal'
         )
+
+def generate_opportunity_report(business):
+    report_content = f"Opportunity Report for {business.name}\n"
+
+    if business.business_type == 'Landscaping':
+        # Logic for landscaping business
+        landscaping_requests_count = LandscapingServiceRequest.objects.filter(
+            service_type__in=business.landscaping_services_offered.values_list('service_type', flat=True)
+        ).count()
+        report_content += f"Number of Landscaping Requests: {landscaping_requests_count}\n"
+        # Add more landscaping-specific data as needed
+
+    elif business.business_type == 'Internet':
+        # Logic for internet service provider
+        internet_deals_count = Deal.objects.filter(business=business.owner, deal_type='internet').count()
+        report_content += f"Number of Internet Deals: {internet_deals_count}\n"
+        # Add more internet-specific data as needed
+
+    # Add similar conditions for other business types
+
+    # Create or update the business report
+    BusinessOpportunityReport.objects.update_or_create(
+        business=business, 
+        defaults={'report_data': report_content}
+    )
+
 
 # Existing RegisterView class
 class RegisterView(generic.CreateView):
@@ -340,4 +367,19 @@ class CreateDealView(generic.CreateView):
 
     def get_success_url(self):
         return reverse_lazy('homeowner:business_dashboard')
+
+@method_decorator(login_required, name='dispatch')
+class BusinessOpportunityReportView(View):
+    def get(self, request, *args, **kwargs):
+        # Get the business associated with the logged-in user
+        business = get_object_or_404(Business, owner=request.user)
+
+        # Generate the report
+        generate_opportunity_report(business)
+
+        # Retrieve the latest report for the business
+        report = BusinessOpportunityReport.objects.filter(business=business).first()
+
+        # Render a template with the report data
+        return render(request, 'homeowner/business_opportunity_report.html', {'report': report})
     
